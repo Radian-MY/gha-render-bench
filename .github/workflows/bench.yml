@@ -1,0 +1,38 @@
+name: render-bench
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Runner specs and encode benchmark
+        run: |
+          set -e
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update && sudo apt-get install -y ffmpeg
+          fi
+          {
+            echo "date_utc: $(date -u +%FT%TZ)"
+            echo "runner_os: $RUNNER_OS"
+            echo "nproc: $(nproc)"
+            echo "cpu_model: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | xargs)"
+            echo "mem_total: $(free -h | awk '/^Mem:/{print $2}')"
+            echo "ffmpeg_version: $(ffmpeg -version 2>/dev/null | head -1)"
+            START=$(date +%s.%N)
+            ffmpeg -y -v error -f lavfi -i testsrc2=size=1080x1920:rate=30:duration=20 -c:v libx264 -crf 21 -preset medium -pix_fmt yuv420p bench-out.mp4
+            END=$(date +%s.%N)
+            echo "encode_seconds: $(echo "$END - $START" | bc)"
+            echo "output_bytes: $(stat -c%s bench-out.mp4)"
+          } | tee bench-result.txt
+      - name: Commit result back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bench-result.txt
+          git commit -m "bench result [skip ci]" || echo "nothing to commit"
+          git push || echo "push skipped"

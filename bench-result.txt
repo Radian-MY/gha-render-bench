@@ -1,0 +1,8 @@
+date_utc: 2026-11-26T03:14:30Z
+runner_os: Linux
+nproc: 4
+cpu_model: AMD EPYC 9V45 96-Core Processor
+mem_total: 15Gi
+ffmpeg_version: ffmpeg version 8.0.1-3ubuntu2 Copyright (c) 2000-2025 the FFmpeg developers
+encode_seconds: 6.642599423
+output_bytes: 20350760
